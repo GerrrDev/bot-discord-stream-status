@@ -16,13 +16,10 @@ MESSAGE_ID = os.getenv("MESSAGE_ID")
 
 if not TOKEN:
     print("⚠️ ERROR: La variable DISCORD_TOKEN no está configurada o es None.")
-    exit()
+    exit(1)
 
-print(f"✅ Token cargado correctamente.")
-
-# ⚡️ INTENTS corregidos
 intents = discord.Intents.default()
-intents.message_content = True  # ✅ NECESARIO PARA COMANDOS
+intents.message_content = True  # NECESARIO para leer mensajes de texto
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 twitch_token = None
@@ -143,9 +140,9 @@ async def update_embed():
         await message.edit(embed=embed)
     else:
         m = await channel.send(embed=embed)
-        print(f"✅ Nuevo mensaje ID generado: {m.id}")
+        print(f"Nuevo mensaje ID: {m.id}")
 
-@tasks.loop(seconds=10)
+@tasks.loop(seconds=1)
 async def periodic_update():
     await update_embed()
 
@@ -154,7 +151,9 @@ async def periodic_update():
 async def cancelar(ctx):
     global stream_cancelado
     stream_cancelado = True
-    await ctx.send("✅ El stream de hoy ha sido cancelado.")
+
+    await ctx.message.delete()
+    await ctx.send("✅ El stream de hoy ha sido cancelado.", delete_after=5)
     await update_embed()
 
 @bot.command()
@@ -162,7 +161,9 @@ async def cancelar(ctx):
 async def horario(ctx, inicio: str, fin: str):
     global custom_horario_uy
     custom_horario_uy = (inicio, fin)
-    await ctx.send(f"✅ Horario actualizado: 🇺🇾 {inicio} - {fin}")
+
+    await ctx.message.delete()
+    await ctx.send(f"✅ Horario actualizado a 🇺🇾 {inicio} - {fin}", delete_after=5)
     await update_embed()
 
 @bot.command()
@@ -171,12 +172,14 @@ async def reset(ctx):
     global stream_cancelado, custom_horario_uy
     stream_cancelado = False
     custom_horario_uy = ("18:00", "22:00")
-    await ctx.send("✅ Estado y horario reseteados a los valores por defecto.")
+
+    await ctx.message.delete()
+    await ctx.send("✅ Estado y horario reseteados a valores por defecto.", delete_after=5)
     await update_embed()
 
 @bot.event
 async def on_ready():
-    print(f"✅ {bot.user} está listo y conectado.")
+    print(f"{bot.user} está listo.")
     await update_embed()
     periodic_update.start()
 
