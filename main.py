@@ -11,28 +11,18 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 TWITCH_CLIENT_ID = os.getenv("TWITCH_CLIENT_ID")
 TWITCH_CLIENT_SECRET = os.getenv("TWITCH_CLIENT_SECRET")
 TWITCH_USER = os.getenv("TWITCH_USER")
-CHANNEL_ID = os.getenv("CHANNEL_ID")
+CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
 MESSAGE_ID = os.getenv("MESSAGE_ID")
 
-# Verificación segura del TOKEN para evitar crash
-if TOKEN is None:
+if not TOKEN:
     print("⚠️ ERROR: La variable DISCORD_TOKEN no está configurada o es None.")
-    exit(1)  # Salir para evitar errores posteriores
-else:
-    print(f"Token leído: {TOKEN[:10]}...")
+    exit()
 
-# Convertir CHANNEL_ID a entero, si no es None
-if CHANNEL_ID is not None:
-    try:
-        CHANNEL_ID = int(CHANNEL_ID)
-    except ValueError:
-        print("⚠️ ERROR: CHANNEL_ID debe ser un número entero.")
-        exit(1)
-else:
-    print("⚠️ ERROR: La variable CHANNEL_ID no está configurada o es None.")
-    exit(1)
+print(f"✅ Token cargado correctamente.")
 
+# ⚡️ INTENTS corregidos
 intents = discord.Intents.default()
+intents.message_content = True  # ✅ NECESARIO PARA COMANDOS
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 twitch_token = None
@@ -102,7 +92,6 @@ async def update_embed():
         except:
             message = None
 
-    # Hora local de Uruguay (UTC-3)
     now = datetime.utcnow() - timedelta(hours=3)
     weekday = now.weekday()
 
@@ -116,7 +105,7 @@ async def update_embed():
     else:
         estado_detallado = "✅ Stream activo ahora mismo"
 
-    embed_color = 0x2ecc71 if status == "ON" else 0x9146FF  # Verde ON, Morado Twitch OFF
+    embed_color = 0x2ecc71 if status == "ON" else 0x9146FF
 
     uy_inicio, uy_fin = custom_horario_uy
     horarios = [f"{flags['Uruguay']} {uy_inicio} - {uy_fin}"]
@@ -154,7 +143,7 @@ async def update_embed():
         await message.edit(embed=embed)
     else:
         m = await channel.send(embed=embed)
-        print(f"Nuevo mensaje ID: {m.id}")
+        print(f"✅ Nuevo mensaje ID generado: {m.id}")
 
 @tasks.loop(minutes=1)
 async def periodic_update():
@@ -187,8 +176,8 @@ async def reset(ctx):
 
 @bot.event
 async def on_ready():
-    print(f"{bot.user} está listo.")
-    await update_embed()  # Primer update inmediato
+    print(f"✅ {bot.user} está listo y conectado.")
+    await update_embed()
     periodic_update.start()
 
 bot.run(TOKEN)
