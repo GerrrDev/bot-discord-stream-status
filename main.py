@@ -8,20 +8,29 @@ from dotenv import load_dotenv
 load_dotenv()
 
 TOKEN = os.getenv("DISCORD_TOKEN")
-print(f"Token leído: {TOKEN[:10]}...")  # Muestra sólo las primeras 10 letras para no exponer el token completo
-print(f"Token tipo: {type(TOKEN)}")
-print(f"Token es None? {'Sí' if TOKEN is None else 'No'}")
-print(f"Token está vacío? {'Sí' if TOKEN == '' else 'No'}")
-
-if TOKEN is None or TOKEN == "":
-    print("ERROR: El token de Discord no está definido o está vacío. Verifica tu variable de entorno DISCORD_TOKEN.")
-    exit(1)
-
 TWITCH_CLIENT_ID = os.getenv("TWITCH_CLIENT_ID")
 TWITCH_CLIENT_SECRET = os.getenv("TWITCH_CLIENT_SECRET")
 TWITCH_USER = os.getenv("TWITCH_USER")
-CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
+CHANNEL_ID = os.getenv("CHANNEL_ID")
 MESSAGE_ID = os.getenv("MESSAGE_ID")
+
+# Verificación segura del TOKEN para evitar crash
+if TOKEN is None:
+    print("⚠️ ERROR: La variable DISCORD_TOKEN no está configurada o es None.")
+    exit(1)  # Salir para evitar errores posteriores
+else:
+    print(f"Token leído: {TOKEN[:10]}...")
+
+# Convertir CHANNEL_ID a entero, si no es None
+if CHANNEL_ID is not None:
+    try:
+        CHANNEL_ID = int(CHANNEL_ID)
+    except ValueError:
+        print("⚠️ ERROR: CHANNEL_ID debe ser un número entero.")
+        exit(1)
+else:
+    print("⚠️ ERROR: La variable CHANNEL_ID no está configurada o es None.")
+    exit(1)
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -60,7 +69,7 @@ async def get_twitch_token():
     async with aiohttp.ClientSession() as session:
         async with session.post(url, params=params) as resp:
             data = await resp.json()
-            twitch_token = data.get("access_token")
+            twitch_token = data["access_token"]
 
 async def check_stream():
     global twitch_token
@@ -74,7 +83,7 @@ async def check_stream():
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers) as resp:
             data = await resp.json()
-            return len(data.get("data", [])) > 0
+            return len(data["data"]) > 0
 
 def ajustar_horario(uy_inicio, uy_fin, offset):
     fmt = "%H:%M"
@@ -90,8 +99,7 @@ async def update_embed():
     if MESSAGE_ID and MESSAGE_ID != "":
         try:
             message = await channel.fetch_message(int(MESSAGE_ID))
-        except Exception as e:
-            print(f"No se pudo obtener el mensaje: {e}")
+        except:
             message = None
 
     # Hora local de Uruguay (UTC-3)
