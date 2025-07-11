@@ -145,7 +145,7 @@ async def update_embed():
         m = await channel.send(embed=embed)
         print(f"✅ Nuevo mensaje ID generado: {m.id}")
 
-@tasks.loop(minutes=1)
+@tasks.loop(seconds=10)
 async def periodic_update():
     await update_embed()
 
