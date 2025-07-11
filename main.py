@@ -8,6 +8,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 TOKEN = os.getenv("DISCORD_TOKEN")
+print(f"Token leído: {TOKEN[:10]}...")  # Muestra sólo las primeras 10 letras para no exponer el token completo
+print(f"Token tipo: {type(TOKEN)}")
+print(f"Token es None? {'Sí' if TOKEN is None else 'No'}")
+print(f"Token está vacío? {'Sí' if TOKEN == '' else 'No'}")
+
+if TOKEN is None or TOKEN == "":
+    print("ERROR: El token de Discord no está definido o está vacío. Verifica tu variable de entorno DISCORD_TOKEN.")
+    exit(1)
+
 TWITCH_CLIENT_ID = os.getenv("TWITCH_CLIENT_ID")
 TWITCH_CLIENT_SECRET = os.getenv("TWITCH_CLIENT_SECRET")
 TWITCH_USER = os.getenv("TWITCH_USER")
@@ -51,7 +60,7 @@ async def get_twitch_token():
     async with aiohttp.ClientSession() as session:
         async with session.post(url, params=params) as resp:
             data = await resp.json()
-            twitch_token = data["access_token"]
+            twitch_token = data.get("access_token")
 
 async def check_stream():
     global twitch_token
@@ -65,7 +74,7 @@ async def check_stream():
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers) as resp:
             data = await resp.json()
-            return len(data["data"]) > 0
+            return len(data.get("data", [])) > 0
 
 def ajustar_horario(uy_inicio, uy_fin, offset):
     fmt = "%H:%M"
@@ -81,7 +90,8 @@ async def update_embed():
     if MESSAGE_ID and MESSAGE_ID != "":
         try:
             message = await channel.fetch_message(int(MESSAGE_ID))
-        except:
+        except Exception as e:
+            print(f"No se pudo obtener el mensaje: {e}")
             message = None
 
     # Hora local de Uruguay (UTC-3)
